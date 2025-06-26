@@ -1,28 +1,35 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM === Obtiene ruta y nombre del archivo arrastrado ===
+REM === Verifica que haya un archivo ===
+if "%~1"=="" (
+    echo Arrastra un archivo .glb sobre este .bat para subirlo
+    pause
+    exit /b
+)
+
+REM === Variables ===
 set "inputFile=%~1"
 for %%F in ("%inputFile%") do (
     set "fileName=%%~nF"
     set "extension=%%~xF"
 )
 
-REM === Validación rápida por si no es .glb ===
+REM === Validación del archivo .glb ===
 if /I not "!extension!"==".glb" (
     echo El archivo no es .glb. Intenta de nuevo.
     pause
     exit /b
 )
 
-REM === Crea carpeta destino ===
+REM === Ruta del modelo ===
 set "destDir=modelos\!fileName!"
 mkdir "!destDir!" 2>nul
 
-REM === Copia el archivo GLB ===
+REM === Copia el archivo .glb ===
 copy /Y "!inputFile!" "!destDir!\"
 
-REM === Genera index.html automático ===
+REM === Genera index.html del modelo ===
 echo ^<html^>^<head^>^<meta charset="UTF-8" /^>^<title^>Modelo: !fileName!^</title^>^</head^> > "!destDir!\index.html"
 echo ^<body style="margin:0; background:#111;"^> >> "!destDir!\index.html"
 echo ^<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"^>^</script^> >> "!destDir!\index.html"
@@ -31,18 +38,23 @@ echo ^<noscript^>Tu navegador no soporta model-viewer.^</noscript^> >> "!destDir
 echo ^<script^>if (!window.customElements)^document.write('Tu navegador no soporta model-viewer.')^</script^> >> "!destDir!\index.html"
 echo ^</body^>^</html^> >> "!destDir!\index.html"
 
+REM === Genera el link público (GitHub Pages) ===
+set "url=https://mmg2302.github.io/modelos3d/modelos/!fileName!/index.html"
+echo !url! > "!destDir!\enlace.txt"
+
 REM === Subida a GitHub ===
 cd modelos
 git add .
-git commit -m "Nuevo modelo !fileName!"
+git commit -m "Subiendo modelo !fileName!"
 git push origin main
 cd..
 
-REM === Muestra el link final ===
+REM === Resultado final ===
 echo.
 echo ============================================
-echo Tu modelo está disponible en:
-echo https://mmg2302.github.io/modelos/!fileName!/index.html
+echo ¡Modelo subido exitosamente!
+echo Link: !url!
+echo También guardado en: !destDir!\enlace.txt
 echo ============================================
 echo.
 pause
